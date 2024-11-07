@@ -1,0 +1,68 @@
+/* Estilos para el Sidebar */
+.sidebar {
+    width: 200px;
+    position: fixed;
+    height: 100%;
+    background-color: #333;
+    padding-top: 20px;
+}
+
+.sidebar a {
+    padding: 10px;
+    text-decoration: none;
+    color: white;
+    display: block;
+    font-size: 1.1em;
+    cursor: pointer;
+}
+
+.sidebar a:hover {
+    background-color: #575757;
+}
+
+/* Estilos para el Contenido */
+.content {
+    padding: 20px;
+    margin-left: 220px;
+}
+
+.content h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.content form {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+}
+
+.content label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.content input[type="text"],
+.content input[type="password"],
+.content input[type="submit"] {
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+.content button {
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.content button:hover {
+    background-color: #45a049;
+}
