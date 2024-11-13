@@ -107,49 +107,6 @@ class MikrotikController extends Controller
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
-    
-    public function mikrotikos_connection2(Request $request)
-    {
-        try{
-
-            $validator = Validator::make($request->all(), [
-                'ip_address' => 'required',
-                'login' => 'required',
-                'password' => 'required'
-            ]);
-            
-            if($validator->fails()) return response()->json($validator->errors(), 404);
-
-            $req_data = [
-                'ip_address' => $request->ip_address,
-                'login' => $request->login,
-                'password' => $request->password
-            ];
-
-            $mikrotikos_db = MikrotikOs::where('ip_address', $req_data['ip_address'])->get();
-
-            if(count($mikrotikos_db) > 0){
-                if($this->check_mikrotik_connection($request->all())):
-                    return redirect()->route('show.Dashboard');
-
-                else:
-                    return response()->json([
-                        'error' => true,
-                        'message' => '¡Routeros no conectados comprobar login administrador !'
-                    ]);
-                endif;
-
-            }else{
-                return $this->store_mikrotikos($request->all());
-            }
-
-        }catch(Exception $e){
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetch data Mikrotik API, '.$e->getMessage()
-            ]);
-        }
-    }
 
     public function check_mikrotik_connection($data){
 
@@ -222,132 +179,106 @@ class MikrotikController extends Controller
 
     public function add_new_address(Request $request)
     {
-        try{
+        try {
             $validator = Validator::make($request->all(), [
                 'ip_address' => 'required',
                 'address' => 'required',
                 'interface' => 'required'
             ]);
-
-            if($validator->fails()) return response()->json($validator->errors(), 404);
-
-            if($this->check_mikrotik_connection($request->all())):
+    
+            if ($validator->fails()) {
+                return redirect()->back()->with('error', 'Error de validación: ' . implode(', ', $validator->errors()->all()));
+            }
+    
+            if ($this->check_mikrotik_connection($request->all())) {
                 $add_address = $this->API->comm('/ip/address/add', [
                     'address' => $request->address,
-                    'interface' =>$request->interface
+                    'interface' => $request->interface
                 ]);
-
+    
                 $list_address = $this->API->comm('/ip/address/print');
-
                 $find_address_id = array_search($add_address, array_column($list_address, '.id'));
-
-                if(!$find_address_id) return response()->json([
-                    'success' => false,
-                    'message' => $add_address['!trap'][0]['message'],
-                    'address_lists' => $list_address,
-                    'mikrotikos_data' =>$this->mikrotikos_data
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => "Añadida con éxito la nueva dirección de la interfaz : $request->interface",
-                    'address_lists' => $list_address
-                ]);
-
-            endif;
-
-        }catch(Exception $e){
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetch data Mikrotik API, '.$e->getMessage()
-            ]);
+    
+                if (!$find_address_id) {
+                    return redirect()->back()->with('error', 'Error: ' . $add_address['!trap'][0]['message']);
+                }
+    
+                return redirect()->back()->with('success', "Añadida con éxito la nueva dirección en la interfaz: {$request->interface}.");
+            } else {
+                return redirect()->back()->with('error', 'Error de conexión con MikroTik.');
+            }
+    
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error al obtener datos de la API de MikroTik: ' . $e->getMessage());
         }
-    }
+    } 
 
     public function add_ip_route(Request $request)
     {
-        try{
+        try {
             $validator = Validator::make($request->all(), [
                 'ip_address' => 'required',
                 'gateway' => 'required'
             ]);
-            if ($validator->fails()) return response()->json($validator->errors(), 404);
-
-            if($this->check_mikrotik_connection($request->all())):
+            if ($validator->fails()) {
+                return redirect()->back()->with('error', 'Error de validación: ' . implode(', ', $validator->errors()->all()));
+            }
+    
+            if ($this->check_mikrotik_connection($request->all())) {
                 $route_lists = $this->API->comm('/ip/route/print');
-
                 $find_route_lists = array_search($request->gateway, array_column($route_lists, 'gateway'));
-
-                if($find_route_lists === 0):
-                    return response()->json([
-                        'success' =>false,
-                        'message' => "Gateway address : $request->gateway ya se ha tomado",
-                        'route_lists' => $this->API->comm('/ip/route/print')
-                    ]);
-
-                else:
-                    $add_route_lists = $this->API->comm('/ip/route/add', [
+    
+                if ($find_route_lists === 0) {
+                    return redirect()->back()->with('error', "La dirección Gateway : {$request->gateway} ya está en uso.");
+                } else {
+                    $this->API->comm('/ip/route/add', [
                         'gateway' => $request->gateway
                     ]);
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Añadida con éxito nuevo route gateway : $request->gateway",
-                        'route_lists' => $this->API->comm('/ip/route/print'),
-                        'mikrotikos_data' => $this->mikrotikos_data
-                    ]);
-                endif;
-
-            endif;
-        }catch(Exception $e){
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetc data Routeros API, '.$e->getMessage()
-            ]);
+                    return redirect()->back()->with('success', "Nuevo Gateway {$request->gateway} añadido con éxito.");
+                }
+            } else {
+                return redirect()->back()->with('error', 'Error de conexión con Mikrotik.');
+            }
+    
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error al obtener datos de la API de RouterOS: ' . $e->getMessage());
         }
     }
-
+    
     public function add_dns_servers(Request $request)
     {
-        try{
+        try {
             $schema = [
                 'ip_address' => 'required',
                 'servers' => 'required',
                 'remote_requests' => 'required'
             ];
             $validator = Validator::make($request->all(), $schema);
-
-            if($validator->fails()) return response()->json($validator->errors(), 404);
-
-            if($this->check_mikrotik_connection($request->all())):
+    
+            if ($validator->fails()) {
+                return redirect()->back()->with('error', 'Error de validación: ' . implode(', ', $validator->errors()->all()));
+            }
+    
+            if ($this->check_mikrotik_connection($request->all())) {
                 $add_dns = $this->API->comm('/ip/dns/set', [
                     'servers' => $request->servers,
                     'allow-remote-requests' => $request->remote_requests
                 ]);
-
-                $dns_lists = $this->API->comm('/ip/dns/print');
-
-                if(count($add_dns) == 0):
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Añadidos con éxito nuevos servidores dns',
-                        'dns_lists' => $dns_lists
-                    ]);
-                else:
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Fallo al añadir servidores dns',
-                        'mikrotikos_data' => $this->mikrotikos_data
-                    ]);
-                endif;
-            endif;
-
-        }catch(Exception $e){
-            return response()->json([
-                'success' => false,
-                'message' => 'Error fetch data Mikrotikos API, '.$e->getMessage()
-            ]);
+    
+                if (count($add_dns) == 0) {
+                    return redirect()->back()->with('success', 'Servidores DNS añadidos con éxito.');
+                } else {
+                    return redirect()->back()->with('error', 'Fallo al añadir los servidores DNS.');
+                }
+            } else {
+                return redirect()->back()->with('error', 'Error de conexión con Mikrotik.');
+            }
+    
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Error al obtener datos de la API de Mikrotik: ' . $e->getMessage());
         }
     }
+    
 
     public function routeros_reboot(Request $request)
     {
@@ -389,9 +320,11 @@ class MikrotikController extends Controller
                 'profile' => 'required'
             ]);
     
-            if ($validator->fails()) return response()->json($validator->errors(), 404);
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
     
-            if ($this->check_mikrotik_connection($request->all())):
+            if ($this->check_mikrotik_connection($request->all())) {
                 // Obtener la lista de usuarios existentes
                 $existing_users = $this->API->comm('/ip/hotspot/user/print');
     
@@ -399,32 +332,21 @@ class MikrotikController extends Controller
                 $user_exists = array_search($request->username, array_column($existing_users, 'name'));
     
                 if ($user_exists !== false) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "El usuario con nombre {$request->username} ya existe en el servidor.",
-                        'user_data' => $existing_users[$user_exists]
-                    ]);
+                    return redirect()->route('dashboard')->with('error', "El usuario con nombre {$request->username} ya existe en el servidor.");
                 }
     
                 // Si el usuario no existe, proceder a añadirlo
-                $new_user = $this->API->comm('/ip/hotspot/user/add', [
+                $this->API->comm('/ip/hotspot/user/add', [
                     'name' => $request->username,
                     'password' => $request->password,
                     'profile' => $request->profile
                 ]);
     
-                return response()->json([
-                    'success' => true,
-                    'message' => "Usuario {$request->username} agregado con éxito.",
-                    'user_data' => $new_user
-                ]);
-            endif;
+                return redirect()->route('show.Dashboard')->with('success', "Usuario {$request->username} agregado con éxito.");
+            }
     
         } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al intentar agregar el usuario en MikroTik, ' . $e->getMessage()
-            ]);
+            return redirect()->route('show.Dashboard')->with('error', 'Error al intentar agregar el usuario en MikroTik: ' . $e->getMessage());
         }
     }
     
@@ -434,43 +356,39 @@ class MikrotikController extends Controller
             // Validación de datos
             $validator = Validator::make($request->all(), [
                 'ip_address' => 'required',
-                'target' => 'required', // IP o nombre de usuario
-                'download_limit' => 'required', // Ej: '2M' para 2 Mbps
-                'upload_limit' => 'required'    // Ej: '1M' para 1 Mbps
+                'target' => 'required',
+                'download_limit' => 'required',
+                'upload_limit' => 'required'
             ]);
     
-            if ($validator->fails()) return response()->json($validator->errors(), 404);
+            if ($validator->fails()) {
+                return redirect()->back()->with('error', 'Error de validación: ' . implode(', ', $validator->errors()->all()));
+            }
     
             // Verificar conexión a MikroTik
             if ($this->check_mikrotik_connection($request->all())) {
                 // Comprobar que la API está inicializada
                 if (is_object($this->API)) {
                     // Configurar límite de ancho de banda
-                    $set_queue = $this->API->comm('/queue/simple/add', [
+                    $this->API->comm('/queue/simple/add', [
                         'name' => $request->target,
                         'target' => $request->target,
                         'max-limit' => "{$request->upload_limit}/{$request->download_limit}"
                     ]);
     
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Límite de ancho de banda establecido para {$request->target}.",
-                        'queue_data' => $set_queue
-                    ]);
+                    return redirect()->back()->with('success', "Límite de ancho de banda establecido para {$request->target}.");
                 } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'La API no está inicializada correctamente.'
-                    ]);
+                    return redirect()->back()->with('error', 'La API no está inicializada correctamente.');
                 }
+            } else {
+                return redirect()->back()->with('error', 'Error de conexión con MikroTik.');
             }
+    
         } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al establecer límite de ancho de banda: ' . $e->getMessage()
-            ]);
+            return redirect()->back()->with('error', 'Error al establecer límite de ancho de banda: ' . $e->getMessage());
         }
     }
+    
 
     public function create_user_group(Request $request)
     {
@@ -482,7 +400,9 @@ class MikrotikController extends Controller
                 'policies' => 'required'  // Ej: "ssh,ftp,winbox,read"
             ]);
     
-            if ($validator->fails()) return response()->json($validator->errors(), 404);
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
     
             // Verificar conexión a MikroTik
             if ($this->check_mikrotik_connection($request->all())) {
@@ -494,45 +414,100 @@ class MikrotikController extends Controller
                     ]);
     
                     if (!empty($existingGroup)) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => "El grupo de usuario '{$request->group_name}' ya existe.",
-                            'group_data' => $existingGroup
-                        ]);
+                        return redirect()->route('dashboard')->with('error', "El grupo de usuario '{$request->group_name}' ya existe.");
                     }
     
                     // Crear grupo de usuario
-                    $create_group = $this->API->comm('/user/group/add', [
+                    $this->API->comm('/user/group/add', [
                         'name' => $request->group_name,
                         'policy' => $request->policies
                     ]);
     
-                    // Obtener lista actualizada de grupos
-                    $group_lists = $this->API->comm('/user/group/print');
-    
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Grupo de usuario '{$request->group_name}' creado con éxito.",
-                        'group_lists' => $group_lists
-                    ]);
+                    return redirect()->route('show.Dashboard')->with('success', "Grupo de usuario '{$request->group_name}' creado con éxito.");
                 } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'La API no está inicializada correctamente.'
-                    ]);
+                    return redirect()->route('show.Dashboard')->with('error', 'La API no está inicializada correctamente.');
                 }
             } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se pudo conectar a RouterOS. Verifique los datos de conexión.'
-                ]);
+                return redirect()->route('show.Dashboard')->with('error', 'No se pudo conectar a RouterOS. Verifique los datos de conexión.');
             }
         } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear grupo en RouterOS: ' . $e->getMessage()
-            ]);
+            return redirect()->route('show.Dashboard')->with('error', 'Error al crear grupo en RouterOS: ' . $e->getMessage());
         }
-    }    
+    }
 
+    public function showDashboard()
+    {
+        try {
+            // Verificar la conexión a MikroTik
+            if ($this->check_mikrotik_connection(session('ip_address'))) {
+                // Obtener lista de usuarios desde MikroTik
+                $user_list = $this->API->comm('/ip/hotspot/user/print');
+                
+                // Depuración: Imprimir lo que devuelve la API
+                Log::debug('Usuarios obtenidos:', $user_list);
+    
+                // Verificar si la respuesta está vacía
+                if (empty($user_list)) {
+                    throw new Exception('No se encontraron usuarios.');
+                }
+            } else {
+                $user_list = [];
+            }
+    
+            return view('dashboard', compact('user_list'));
+        } catch (Exception $e) {
+            Log::error('Error al cargar usuarios: ' . $e->getMessage());
+            return view('dashboard')->with('error', 'Error al cargar usuarios: ' . $e->getMessage());
+        }
+    }
+    
+    public function setup_dhcp(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'ip_address' => 'required',
+                'dhcp_pool_name' => 'required',
+                'pool_range' => 'required',
+                'interface' => 'required',
+                'gateway' => 'required',
+                'subnet_mask' => 'required',
+                'dns_servers' => 'required'
+            ]);
+    
+            if ($validator->fails()) {
+                return redirect()->route('show.Dashboard')->withErrors($validator);
+            }
+    
+            if ($this->check_mikrotik_connection($request->all())) {
+                // 1. Crear el DHCP Pool
+                $this->API->comm('/ip/pool/add', [
+                    'name' => $request->dhcp_pool_name,
+                    'ranges' => $request->pool_range
+                ]);
+    
+                // 2. Configurar la red DHCP
+                $this->API->comm('/ip/dhcp-server/network/add', [
+                    'address' => "{$request->gateway}/24",
+                    'netmask' => $request->subnet_mask,
+                    'gateway' => $request->gateway,
+                    'dns-server' => $request->dns_servers,
+                ]);
+    
+                // 3. Activar el servidor DHCP
+                $this->API->comm('/ip/dhcp-server/add', [
+                    'name' => 'dhcp1',
+                    'interface' => $request->interface,
+                    'address-pool' => $request->dhcp_pool_name,
+                    'disabled' => 'no'
+                ]);
+    
+                // Redirigir al dashboard con mensaje de éxito
+                return redirect()->route('show.Dashboard')->with('success', 'Configuración de DHCP completada exitosamente.');
+            }
+    
+        } catch (Exception $e) {
+            // Redirigir al dashboard con mensaje de error
+            return redirect()->route('show.Dashboard')->with('error', 'Error al configurar el DHCP en Mikrotik API: ' . $e->getMessage());
+        }
+    }  
 }

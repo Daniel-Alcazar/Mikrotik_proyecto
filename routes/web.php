@@ -28,17 +28,23 @@ Route::prefix('v1')->group(function(){
 
     Route::post('/set-interface', [MikrotikController::class, 'set_interface']);
 
-    Route::post('/add-new-address', [MikrotikController::class, 'add_new_address']);
+    Route::post('/add-new-address', [MikrotikController::class, 'add_new_address'])->name('add_new_address');
 
     Route::post('/add-ip-route', [MikrotikController::class, 'add_ip_route'])->name('add_ip_route');
 
-    Route::post('/add-dns-server', [MikrotikController::class, 'add_dns_servers']);
+    Route::post('/add-dns-servers', [MikrotikController::class, 'add_dns_servers'])->name('add_dns_servers');
 
     Route::post('/routeros-reboot', [MikrotikController::class, 'routeros_reboot']);
 
-    Route::post('/add-user', [MikrotikController::class, 'add_user']);
+    Route::post('/add-user', [MikrotikController::class, 'add_user'])->name('add_user');
+    
+    Route::post('/update-user', [MikrotikController::class, 'update_user'])->name('update_user');
+    
+    Route::post('/delete-user', [MikrotikController::class, 'delete_user'])->name('delete_user');
 
-    Route::post('/set-bandwidth-limit', [MikrotikController::class, 'set_bandwidth_limit']);
+    Route::post('/set-bandwidth-limit', [MikrotikController::class, 'set_bandwidth_limit'])->name('set_bandwidth_limit');
 
-    Route::post('/create-user-group', [MikrotikController::class, 'create_user_group']);
+    Route::post('/create-user-group', [MikrotikController::class, 'create_user_group'])->name('create_user_group');
+
+    Route::post('/setup-dhcp', [MikrotikController::class, 'setup_dhcp'])->name('setup_dhcp');
 });

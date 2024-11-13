@@ -1,68 +1,183 @@
+/* Importa una fuente profesional de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Aplicar la fuente en todo el documento */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    color: #2c3e50;
+}
+
 /* Estilos para el Sidebar */
 .sidebar {
-    width: 200px;
+    width: 240px;
     position: fixed;
     height: 100%;
-    background-color: #333;
+    background-color: #1c2833; /* Azul oscuro profesional */
     padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Sombra sutil */
 }
 
 .sidebar a {
-    padding: 10px;
+    padding: 15px;
     text-decoration: none;
-    color: white;
+    color: #f7f9fb;
     display: block;
     font-size: 1.1em;
+    font-weight: 500;
     cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+    border-radius: 4px;
+    margin: 5px;
 }
 
 .sidebar a:hover {
-    background-color: #575757;
+    background-color: #2e4053; /* Tonalidad azul intermedia */
+    color: #ffffff;
 }
 
 /* Estilos para el Contenido */
 .content {
-    padding: 20px;
-    margin-left: 220px;
+    padding: 30px;
+    margin-left: 260px;
+    background-color: #f4f6f9; /* Fondo claro para contraste */
+    min-height: 100vh;
 }
 
 .content h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-weight: 600;
 }
 
+.content p {
+    font-size: 1.1em;
+    color: #7f8c8d;
+}
+
+/* Estilos para el formulario y secciones */
 .content form {
     display: flex;
     flex-direction: column;
-    max-width: 400px;
+    max-width: 450px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra ligera */
 }
 
 .content label {
     margin-top: 10px;
-    font-weight: bold;
+    font-weight: 500;
+    color: #34495e;
 }
 
 .content input[type="text"],
-.content input[type="password"],
-.content input[type="submit"] {
-    padding: 10px;
+.content input[type="password"] {
+    padding: 12px;
     font-size: 1em;
     width: 100%;
     box-sizing: border-box;
     margin-top: 5px;
     margin-bottom: 15px;
+    border: 1px solid #dfe6e9;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.content input[type="text"]:focus,
+.content input[type="password"]:focus {
+    border-color: #2980b9; /* Color del borde cuando se hace foco */
+    box-shadow: 0 0 8px rgba(41, 128, 185, 0.2);
 }
 
 .content button {
-    padding: 10px;
+    padding: 12px;
     font-size: 1em;
     width: 100%;
-    background-color: #4CAF50;
+    background-color: #2980b9; /* Azul profesional */
     color: white;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
+    font-weight: 500;
+    margin-top: 10px;
+    transition: background-color 0.3s;
 }
 
 .content button:hover {
-    background-color: #45a049;
+    background-color: #3498db;
 }
+
+/* Estilos para las secciones adicionales */
+#default, #createUserGroup, #user, #bandwidth, #newAddress, #ipRoute, #dnsServer {
+    display: none;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.content input[type="submit"] {
+    padding: 12px;
+    font-size: 1em;
+    background-color: #e67e22;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.content input[type="submit"]:hover {
+    background-color: #d35400;
+}
+
+/* Estilos para las notificaciones */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    background-color: #333;
+    color: white;
+    border-radius: 5px;
+    font-size: 16px;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    animation: fadeInOut 5s forwards;
+}
+
+.notification.success {
+    background-color: #4CAF50; /* Verde */
+}
+
+.notification.error {
+    background-color: #f44336; /* Rojo */
+}
+
+/* Animación para la notificación */
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
